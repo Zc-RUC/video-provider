@@ -37,6 +37,7 @@ export function InspectDialog({ info, defaultDir, analyzing, creating, onClose, 
               <Thumbnail src={info.thumbnail} title={info.title} duration={info.duration} kind={info.mediaKind} />
               <div><span className="source-pill">{info.source}</span><h3>{info.title}</h3><p>{info.uploader}{info.duration ? ` · ${formatDuration(info.duration)}` : ''}</p></div>
             </div>
+            {info.source === 'BiliBili' && <div className="membership-note"><ListVideo size={18} /><div><strong>会员画质由 B 站账号权限决定</strong><p>在「设置 → 使用浏览器登录状态」中选择已登录 B 站的浏览器，再重新解析。账号可用的高码率、4K、HDR 等版本会显示在下方。</p></div></div>}
             <div className="inspect-options">
               <label><span>下载格式</span><select value={audioOnly && info.kind === 'ytdlp' ? 'audio-auto' : formatId} disabled={audioOnly && info.kind === 'ytdlp'} onChange={(event) => setFormatId(event.target.value)}>{audioOnly && info.kind === 'ytdlp' && <option value="audio-auto">最佳音频 · MP3 192kbps</option>}{info.formats.map((format) => <option key={format.id} value={format.id}>{format.label}</option>)}</select></label>
               <div className="audio-option"><span className="audio-option-icon"><Music2 size={18} /></span><div><strong>仅保留音频</strong><small>{info.mediaKind === 'audio' ? '来源本身就是音频' : '去掉画面，保存为 MP3'}</small></div><button type="button" role="switch" aria-checked={audioOnly} disabled={info.mediaKind === 'audio'} className={`toggle ${audioOnly ? 'is-on' : ''}`} onClick={() => setAudioOnly(!audioOnly)}><span /></button></div>

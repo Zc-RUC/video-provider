@@ -141,15 +141,17 @@ async function inspectSite(input, options = {}) {
     '--skip-download',
     '--no-warnings',
     '--no-cache-dir',
-    '--socket-timeout', '20',
-    '--retries', '2',
+    '--socket-timeout', '30',
+    '--retries', '3',
+    '--extractor-retries', '4',
+    '--retry-sleep', '2',
     '--playlist-end', '25',
     ...cookieArgs(options.cookiesFromBrowser),
     '--', target,
   ];
   try {
     const { stdout } = await execFileAsync(binaries.ytDlp, args, {
-      timeout: 120000,
+      timeout: 240000,
       maxBuffer: 48 * 1024 * 1024,
       windowsHide: true,
       env: { ...process.env, PYTHONIOENCODING: 'utf8' },
@@ -181,19 +183,36 @@ async function inspectSite(input, options = {}) {
     const formats = (data.formats || []).filter((format) => format.url && (format.vcodec !== 'none' || format.acodec !== 'none')).map((format) => {
       const hasVideo = format.vcodec !== 'none';
       const hasAudio = format.acodec !== 'none';
-      const quality = hasVideo ? (format.height ? `${format.height}p` : format.format_note || '视频') : '音频';
+      const quality = hasVideo ? (format.format_note || (format.height ? `${format.height}p` : '视频')) : '音频';
+      const codecName = format.vcodec?.split('.')[0];
+      const codec = ({ av01: 'AV1', hev1: 'HEVC', hvc1: 'HEVC', avc1: 'H.264', h264: 'H.264', vp09: 'VP9', vp9: 'VP9' })[codecName] || (hasVideo ? codecName?.toUpperCase().slice(0, 12) : null);
+      const dynamicRange = format.dynamic_range && format.dynamic_range.toUpperCase() !== 'SDR' && !/(HDR|杜比|Dolby)/i.test(quality) ? format.dynamic_range : null;
+      const label = [
+        quality,
+        format.fps && hasVideo ? `${Math.round(format.fps)}fps` : null,
+        codec,
+        dynamicRange,
+        hasVideo && format.tbr ? `${Math.round(format.tbr)}kbps` : null,
+        String(format.ext).toUpperCase(),
+        hasVideo && !hasAudio ? '自动合流' : null,
+        !hasVideo && format.abr ? `${Math.round(format.abr)}kbps` : null,
+      ].filter(Boolean).join(' · ');
       return {
         id: String(format.format_id),
-        label: `${quality}${format.fps && hasVideo ? ` ${Math.round(format.fps)}fps` : ''} · ${String(format.ext).toUpperCase()}${hasVideo && !hasAudio ? ' · 自动合流' : ''}${!hasVideo && format.abr ? ` · ${Math.round(format.abr)}kbps` : ''}`,
+        label,
         ext: format.ext,
         height: format.height || null,
         fps: format.fps || null,
         filesize: format.filesize || format.filesize_approx || null,
         hasVideo,
         hasAudio,
+        formatNote: format.format_note || null,
+        codec,
+        dynamicRange: format.dynamic_range || null,
+        tbr: format.tbr || null,
       };
     });
-    formats.sort((a, b) => Number(b.hasVideo) - Number(a.hasVideo) || (b.height || 0) - (a.height || 0) || (b.fps || 0) - (a.fps || 0));
+    formats.sort((a, b) => Number(b.hasVideo) - Number(a.hasVideo) || (b.height || 0) - (a.height || 0) || (b.fps || 0) - (a.fps || 0) || (b.tbr || 0) - (a.tbr || 0));
     const recommended = {
       id: 'recommended',
       label: '最佳画质 · 自动选择并合流',

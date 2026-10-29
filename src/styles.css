@@ -291,6 +291,10 @@ a { color: inherit; }
 .source-pill { display: inline-block; padding: 3px 6px; border-radius: 4px; background: #eee4da; color: #a5664b; font-size: 8px; }
 .inspect-media h3 { margin: 8px 0 7px; font-size: 12px; line-height: 1.45; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .inspect-media p { margin: 0; color: #999187; font-size: 9px; }
+.membership-note { display: flex; align-items: flex-start; gap: 10px; margin: -3px 0 17px; padding: 11px 12px; border: 1px solid #ead8ca; border-radius: 9px; background: #fbf1e8; color: #a86b4f; }
+.membership-note > svg { flex: 0 0 auto; margin-top: 1px; }
+.membership-note strong { display: block; font-size: 10px; font-weight: 600; }
+.membership-note p { margin: 4px 0 0; color: #9a7b68; font-size: 9px; line-height: 1.65; }
 .inspect-options { display: flex; flex-direction: column; gap: 15px; }
 .inspect-options > label > span { display: block; margin-bottom: 7px; color: #827b71; font-size: 10px; font-weight: 500; }
 .inspect-options select, .dialog-directory { width: 100%; height: 39px; padding: 0 11px; border: 1px solid #ddd7cc; border-radius: 8px; background: #fffefa; font-size: 11px; }

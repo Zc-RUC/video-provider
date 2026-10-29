@@ -9,7 +9,7 @@
 ## 下载即用（推荐）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
-2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.0.0.zip`。
+2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.0.1.zip`。
 3. 运行启动器：
    - **macOS**：双击 `Downbit.command`（如系统提示，先右键脚本并选择“打开”）。
    - **Windows**：双击 `Downbit.bat`。
@@ -71,7 +71,7 @@ CLI 会复用正在运行的本地服务；服务未运行时会自动启动。�
 - 任务与设置：项目目录下的 `.downbit/`（可用 `DOWNBIT_DATA_DIR` 修改）。
 - 默认下载目录：`~/Downloads/Downbit`，可在设置页修改。
 - 自定义环境：`YT_DLP_PATH`、`FFMPEG_PATH`、`DOWNBIT_API_PORT`、`DOWNBIT_DOWNLOAD_DIR`。
-- 需要登录的网站：在设置页选择对应浏览器，由 yt-dlp 读取该浏览器的登录 Cookies；也可在 CLI 使用 `--cookies <browser>`。
+- B 站会员画质：先在浏览器中登录具有会员权限的 B 站账号，再在设置页选择同一浏览器并重新解析。高码率、4K、HDR 等账号可用版本会显示在格式列表中；不会绕过会员权限。其他需要登录的网站也可使用此方式，CLI 对应 `--cookies <browser>`。
 
 ## 技术与隐私
 
