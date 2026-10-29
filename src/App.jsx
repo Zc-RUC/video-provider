@@ -19,6 +19,7 @@ export default function App() {
   const [tasks, setTasks] = useState([]);
   const [settings, setSettings] = useState(null);
   const [capabilities, setCapabilities] = useState(null);
+  const [accounts, setAccounts] = useState(null);
   const [connected, setConnected] = useState(false);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -45,6 +46,7 @@ export default function App() {
     setTasks(state.tasks);
     setSettings(state.settings);
     setCapabilities(state.capabilities);
+    setAccounts(state.accounts || null);
     setReady(true);
     setLoadError(false);
   }, []);
@@ -185,6 +187,19 @@ export default function App() {
       return null;
     }
   };
+  const accountAction = async (site, action) => {
+    try {
+      const status = await api.accountAction(site, action);
+      setAccounts((current) => ({ ...current, [site]: status }));
+      if (action === 'login') notify('已打开 B 站登录窗口，登录成功后会自动同步');
+      else if (action === 'refresh') notify(status.loggedIn ? `已同步：${status.username} · ${status.vipLabel}` : '尚未检测到 B 站登录');
+      else if (action === 'logout') notify('已退出应用内的 B 站账号');
+      return status;
+    } catch (error) {
+      notify(error.message, 'error');
+      throw error;
+    }
+  };
 
   if (!ready) return <div className="app-loading"><span className="brand-mark large"><ArrowDownToLine size={30} /></span><p>正在打开你的媒体空间…</p></div>;
   if (loadError || !settings) return <div className="app-loading offline"><WifiOff size={30} /><h1>本地服务还没有连接</h1><p>在项目目录运行 <code>npm run dev</code>，然后刷新页面。</p><button className="primary-button" onClick={() => location.reload()}>重新连接</button></div>;
@@ -215,11 +230,11 @@ export default function App() {
           {page === 'downloads' && <Downloads inputRef={inputRef} input={input} setInput={setInput} onInspect={inspect} onPaste={paste} analyzing={analyzing} error={composerError} tasks={tasks} settings={settings} onAction={action} onRemove={remove} onPlay={setPlaying} onOpen={open} navigate={navigate} />}
           {page === 'library' && <Library tasks={tasks} onPlay={setPlaying} onOpen={open} onRemove={remove} onNew={newDownload} />}
           {page === 'cli' && <Cli />}
-          {page === 'settings' && <Settings settings={settings} capabilities={capabilities} onSave={saveSettings} onChooseFolder={chooseFolder} />}
+          {page === 'settings' && <Settings settings={settings} capabilities={capabilities} accounts={accounts} onSave={saveSettings} onChooseFolder={chooseFolder} onAccountAction={accountAction} />}
         </div>
       </main>
 
-      {preview && <InspectDialog info={preview} defaultDir={settings.downloadDir} analyzing={analyzing} creating={creating} onClose={() => setPreview(null)} onStart={startDownload} onInspectEntry={inspect} />}
+      {preview && <InspectDialog info={preview} accounts={accounts} defaultDir={settings.downloadDir} analyzing={analyzing} creating={creating} onClose={() => setPreview(null)} onStart={startDownload} onInspectEntry={inspect} />}
       {playing && <MediaDialog task={playing} onClose={() => setPlaying(null)} />}
       <div className="toast-region" aria-live="polite">{toasts.map((toast) => <div className={`toast toast-${toast.type}`} key={toast.id}>{toast.type === 'success' ? <Check size={16} /> : <X size={16} />}<span>{toast.message}</span><button onClick={() => setToasts((current) => current.filter((item) => item.id !== toast.id))}><X size={13} /></button></div>)}</div>
     </div>

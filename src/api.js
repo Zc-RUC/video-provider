@@ -16,6 +16,7 @@ export const api = {
   action: (id, action) => request(`/api/tasks/${id}/action`, { method: 'POST', body: JSON.stringify({ action }) }),
   remove: (id) => request(`/api/tasks/${id}`, { method: 'DELETE' }),
   settings: (patch) => request('/api/settings', { method: 'POST', body: JSON.stringify(patch) }),
+  accountAction: (site, action) => request(`/api/accounts/${site}/${action}`, { method: 'POST' }),
   chooseFolder: () => request('/api/system/choose-folder', { method: 'POST' }),
   open: (id, reveal = false) => request(`/api/tasks/${id}/open`, { method: 'POST', body: JSON.stringify({ reveal }) }),
   subscribe({ onState, onOpen, onError }) {

@@ -126,8 +126,19 @@ async function hlsInfo(url, details) {
   };
 }
 
-function cookieArgs(browser) {
+function cookieArgs(options) {
+  if (options.cookieFile) return ['--cookies', options.cookieFile];
+  const browser = options.cookiesFromBrowser;
   return browser && browser !== 'none' ? ['--cookies-from-browser', browser] : [];
+}
+
+function isBilibili(value) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === 'bilibili.com' || hostname.endsWith('.bilibili.com') || hostname === 'b23.tv';
+  } catch {
+    return false;
+  }
 }
 
 async function inspectSite(input, options = {}) {
@@ -146,7 +157,7 @@ async function inspectSite(input, options = {}) {
     '--extractor-retries', '4',
     '--retry-sleep', '2',
     '--playlist-end', '25',
-    ...cookieArgs(options.cookiesFromBrowser),
+    ...cookieArgs(options),
     '--', target,
   ];
   try {
@@ -246,8 +257,9 @@ async function inspectSite(input, options = {}) {
 }
 
 export class Inspector {
-  constructor(settings) {
+  constructor(settings, accounts) {
     this.settings = settings;
+    this.accounts = accounts;
     this.cache = new Map();
   }
 
@@ -255,6 +267,13 @@ export class Inspector {
     const input = String(rawInput || '').trim();
     if (!input) throw new Error('请先粘贴链接或输入搜索内容。');
     const config = { ...this.settings(), ...overrides };
+    if (this.accounts && isBilibili(input)) {
+      const cookieFile = this.accounts.cookiePath();
+      if (cookieFile) {
+        config.cookieFile = cookieFile;
+        config.cookiesFromBrowser = 'none';
+      }
+    }
     let info;
     if (!isHttpUrl(input)) {
       info = await inspectSite(input, config);
@@ -277,6 +296,7 @@ export class Inspector {
       }
     }
     info.cookiesFromBrowser = config.cookiesFromBrowser || 'none';
+    info.cookieFile = config.cookieFile || null;
     info.inspectionId = id();
     info.createdAt = Date.now();
     this.cache.set(info.inspectionId, info);
@@ -299,6 +319,7 @@ export class Inspector {
     return {
       ...info,
       mediaUrl: undefined,
+      cookieFile: undefined,
       acceptRanges: undefined,
       formats: info.formats.map(({ url, ...format }) => format),
     };

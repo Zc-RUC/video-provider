@@ -253,6 +253,18 @@ a { color: inherit; }
 .setting-row:last-child { border-bottom: 0; }
 .setting-row label { font-size: 11px; font-weight: 500; }
 .setting-row p { color: #9c958b; font-size: 9px; margin: 5px 0 0; }
+.account-card { display: flex; align-items: center; gap: 13px; padding: 18px 23px; }
+.account-logo { width: 39px; height: 39px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; background: #fbe4ec; color: #d85b86; font-size: 19px; font-weight: 700; }
+.account-details { flex: 1; min-width: 0; }
+.account-details strong { display: block; font-size: 12px; font-weight: 600; }
+.account-details p { margin: 5px 0 0; color: #8f867d; font-size: 10px; }
+.account-details small { display: block; margin-top: 5px; color: #aaa197; font-size: 8px; line-height: 1.6; }
+.account-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 6px; background: #eeeae3; color: #918a80; font-size: 8px; white-space: nowrap; }
+.account-status.is-active { background: #e6eee1; color: #6c8661; }
+.account-actions { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.account-actions button { padding: 8px 10px; border: 1px solid #ded8ce; border-radius: 8px; color: #8b6956; font-size: 10px; white-space: nowrap; }
+.account-actions button:hover { background: #f5eee7; border-color: #cfa993; }
+.account-actions button.account-logout { color: #a19a90; border-color: transparent; }
 .directory-control { width: min(390px, 50%); display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #dfdad0; border-radius: 8px; background: #fdfcf8; color: #a29b90; }
 .directory-control input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 10px; }
 .directory-control button { display: grid; place-items: center; padding: 2px; color: #a8755c; }
@@ -436,6 +448,11 @@ a { color: inherit; }
   .cli-task-commands > div { flex-direction: column; align-items: flex-start; }
   .cli-task-commands > div > svg { display: none; }
   .setting-row { flex-direction: column; align-items: flex-start; gap: 13px; }
+  .account-card { align-items: flex-start; flex-wrap: wrap; padding: 17px; }
+  .account-details { min-width: calc(100% - 56px); }
+  .account-actions { width: 100%; margin-left: 0; }
+  .account-actions button { flex: 1; }
+  .account-status { margin-left: auto; }
   .setting-row > .toggle, .setting-row > .toggle-with-icon { align-self: flex-end; margin-top: -35px; }
   .directory-row > .directory-control { width: 100%; }
   .range-control { align-self: stretch; }

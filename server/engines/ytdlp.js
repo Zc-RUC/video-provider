@@ -55,7 +55,7 @@ export async function downloadWithYtDlp(task, context) {
     '--print', 'after_move:DOWNBIT_FILE=%(filepath)j',
     ...(binaries.ffmpeg ? ['--ffmpeg-location', binaries.ffmpeg] : []),
     ...(task.audioOnly ? ['--extract-audio', '--audio-format', 'mp3', '--audio-quality', '192K'] : ['--merge-output-format', 'mp4']),
-    ...(cookieBrowser && cookieBrowser !== 'none' ? ['--cookies-from-browser', cookieBrowser] : []),
+    ...(task.cookieFile ? ['--cookies', task.cookieFile] : cookieBrowser && cookieBrowser !== 'none' ? ['--cookies-from-browser', cookieBrowser] : []),
     '--', task.sourceUrl,
   ];
   let printedPath = null;

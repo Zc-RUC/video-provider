@@ -5,7 +5,7 @@ function Toggle({ checked, onChange, label }) {
   return <button type="button" role="switch" aria-checked={checked} aria-label={label} className={`toggle ${checked ? 'is-on' : ''}`} onClick={() => onChange(!checked)}><span /></button>;
 }
 
-export default function Settings({ settings, capabilities, onSave, onChooseFolder }) {
+export default function Settings({ settings, capabilities, accounts, onSave, onChooseFolder, onAccountAction }) {
   const [directory, setDirectory] = useState(settings.downloadDir);
   const [saved, setSaved] = useState(false);
   useEffect(() => setDirectory(settings.downloadDir), [settings.downloadDir]);
@@ -31,9 +31,27 @@ export default function Settings({ settings, capabilities, onSave, onChooseFolde
       </section>
 
       <section className="settings-group">
+        <div className="settings-group-title"><ShieldCheck size={19} /><div><h2>账号与会员</h2><p>在独立应用浏览器中登录，网页和 CLI 沿用同一份会话。</p></div></div>
+        <div className="account-card">
+          <span className="account-logo">B</span>
+          <div className="account-details">
+            <strong>Bilibili</strong>
+            <p>{accounts?.bilibili?.awaitingLogin ? '登录窗口已打开，完成后会自动同步账号状态' : accounts?.bilibili?.loggedIn ? `${accounts.bilibili.username} · ${accounts.bilibili.vipLabel}` : '登录后获取账号权限内的会员清晰度'}</p>
+            <small>使用 Downbit 独立 Chrome 配置，不读取日常浏览器数据；会话文件仅当前用户可读写。</small>
+          </div>
+          <span className={`account-status ${accounts?.bilibili?.loggedIn ? 'is-active' : ''}`}>{accounts?.bilibili?.loggedIn ? '已登录' : '未登录'}</span>
+          <div className="account-actions">
+            <button disabled={!accounts?.bilibili?.available || accounts?.bilibili?.awaitingLogin} onClick={() => onAccountAction('bilibili', 'login').catch(() => {})}>{accounts?.bilibili?.awaitingLogin ? '等待登录…' : accounts?.bilibili?.loggedIn ? '重新登录' : '登录 B 站'}</button>
+            <button onClick={() => onAccountAction('bilibili', 'refresh').catch(() => {})}>刷新状态</button>
+            {accounts?.bilibili?.loggedIn && <button className="account-logout" onClick={() => onAccountAction('bilibili', 'logout').catch(() => {})}>退出</button>}
+          </div>
+        </div>
+      </section>
+
+      <section className="settings-group">
         <div className="settings-group-title"><Layers3 size={19} /><div><h2>下载行为</h2><p>续传、登录状态与完成提醒。</p></div></div>
         <div className="setting-row"><div><label>启动后继续未完成任务</label><p>意外退出不会丢失已经下载的部分</p></div><Toggle label="启动后继续未完成任务" checked={settings.resumeOnStart} onChange={(value) => save({ resumeOnStart: value })} /></div>
-        <div className="setting-row"><div><label htmlFor="cookies-browser">使用浏览器登录状态</label><p>用于 B 站会员画质等需要登录的网站；选择已登录同一账号的浏览器后重新解析</p></div><div className="select-control"><ShieldCheck size={15} /><select id="cookies-browser" value={settings.cookiesFromBrowser} onChange={(event) => save({ cookiesFromBrowser: event.target.value })}><option value="none">不使用</option><option value="chrome">Chrome</option><option value="chromium">Chromium</option><option value="edge">Microsoft Edge</option><option value="firefox">Firefox</option><option value="safari">Safari</option><option value="brave">Brave</option><option value="arc">Arc</option></select><ChevronDown size={14} /></div></div>
+        <div className="setting-row"><div><label htmlFor="cookies-browser">系统浏览器 Cookies（备用）</label><p>用于其他站点或备用登录方式；应用内的 B 站账号会话优先</p></div><div className="select-control"><ShieldCheck size={15} /><select id="cookies-browser" value={settings.cookiesFromBrowser} onChange={(event) => save({ cookiesFromBrowser: event.target.value })}><option value="none">不使用</option><option value="chrome">Chrome</option><option value="chromium">Chromium</option><option value="edge">Microsoft Edge</option><option value="firefox">Firefox</option><option value="safari">Safari</option><option value="brave">Brave</option><option value="arc">Arc</option></select><ChevronDown size={14} /></div></div>
         <div className="setting-row"><div><label>下载完成通知</label><p>任务完成时显示系统通知</p></div><div className="toggle-with-icon"><Bell size={15} /><Toggle label="下载完成通知" checked={settings.notifications} onChange={async (value) => { if (value && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission(); save({ notifications: value }); }} /></div></div>
       </section>
 

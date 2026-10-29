@@ -67,6 +67,7 @@ export class DownloadManager extends EventEmitter {
       source: info.source,
       sourceUrl: info.sourceUrl,
       cookiesFromBrowser: info.cookiesFromBrowser || 'none',
+      cookieFile: info.cookieFile || null,
       originalInput: info.originalInput,
       thumbnail: info.thumbnail,
       duration: info.duration,

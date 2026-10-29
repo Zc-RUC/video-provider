@@ -9,7 +9,7 @@
 ## 下载即用（推荐）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
-2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.0.1.zip`。
+2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.1.0.zip`。
 3. 运行启动器：
    - **macOS**：双击 `Downbit.command`（如系统提示，先右键脚本并选择“打开”）。
    - **Windows**：双击 `Downbit.bat`。
@@ -70,12 +70,13 @@ CLI 会复用正在运行的本地服务；服务未运行时会自动启动。�
 
 - 任务与设置：项目目录下的 `.downbit/`（可用 `DOWNBIT_DATA_DIR` 修改）。
 - 默认下载目录：`~/Downloads/Downbit`，可在设置页修改。
-- 自定义环境：`YT_DLP_PATH`、`FFMPEG_PATH`、`DOWNBIT_API_PORT`、`DOWNBIT_DOWNLOAD_DIR`。
-- B 站会员画质：先在浏览器中登录具有会员权限的 B 站账号，再在设置页选择同一浏览器并重新解析。高码率、4K、HDR 等账号可用版本会显示在格式列表中；不会绕过会员权限。其他需要登录的网站也可使用此方式，CLI 对应 `--cookies <browser>`。
+- 自定义环境：`YT_DLP_PATH`、`FFMPEG_PATH`、`DOWNBIT_API_PORT`、`DOWNBIT_DOWNLOAD_DIR`、`CHROME_PATH`。
+- B 站账号与会员：在「设置 → 账号与会员」点击“登录 B 站”，会打开 Downbit 独立的 Chrome 登录窗口。登录成功后自动识别账号和会员状态、保存会话，并让网页与 CLI 共用。此功能需要本机安装 Chrome，不读取日常浏览器配置；会话文件权限为 `0600`。
+- 高码率、4K、HDR 等版本取决于视频和账号权限，不会绕过会员限制。其他网站可在设置页选择系统浏览器 Cookies，CLI 对应 `--cookies <browser>`；应用内 B 站会话优先。
 
 ## 技术与隐私
 
-React + Vite + Express；yt-dlp 负责站点解析，FFmpeg 负责音视频处理。服务仅绑定 `127.0.0.1`，不上传媒体到项目服务器。远程内容仍会按你的请求访问来源网站。
+React + Vite + Express；Puppeteer 负责独立账号浏览器，yt-dlp 负责站点解析，FFmpeg 负责音视频处理。服务仅绑定 `127.0.0.1`，不上传媒体到项目服务器。远程内容仍会按你的请求访问来源网站。
 
 这是 Web 工作台与 CLI 的复刻实现，不包含原生安装包、DRM 破解或独立的浏览器自动嗅探扩展。请仅下载你有权保存的内容，并遵守来源网站条款。
 

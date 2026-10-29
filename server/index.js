@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { Store } from './store.js';
 import { Inspector } from './inspector.js';
 import { DownloadManager } from './manager.js';
+import { AccountManager } from './accounts.js';
 import { capabilities } from './binaries.js';
 import { errorMessage, expandHome } from './utils.js';
 
@@ -14,8 +15,10 @@ const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.resolve(process.env.DOWNBIT_DATA_DIR || path.join(root, '.downbit'));
 const store = new Store(dataDir);
-const inspector = new Inspector(() => store.state.settings);
+const accounts = new AccountManager(dataDir);
+const inspector = new Inspector(() => store.state.settings, accounts);
 const manager = new DownloadManager(store, path.join(dataDir, 'partials'));
+accounts.on('change', () => manager.emitChange());
 const app = express();
 const port = Number(process.env.DOWNBIT_API_PORT || process.env.PORT || 4317);
 const host = '127.0.0.1';
@@ -40,6 +43,7 @@ const state = () => ({
   tasks: manager.snapshot(),
   settings: store.state.settings,
   capabilities: capabilityInfo,
+  accounts: { bilibili: accounts.snapshot() },
 });
 
 app.get('/api/health', (req, res) => res.json({ service: 'downbit-local', version: 1 }));
@@ -55,6 +59,28 @@ app.get('/api/events', (req, res) => {
     clearInterval(heartbeat);
     manager.off('change', send);
   });
+});
+
+app.post('/api/accounts/bilibili/login', async (req, res, next) => {
+  try {
+    res.json(await accounts.login());
+  } catch (error) {
+    next(error);
+  }
+});
+app.post('/api/accounts/bilibili/refresh', async (req, res, next) => {
+  try {
+    res.json(await accounts.refresh());
+  } catch (error) {
+    next(error);
+  }
+});
+app.post('/api/accounts/bilibili/logout', async (req, res, next) => {
+  try {
+    res.json(await accounts.logout());
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.post('/api/inspect', async (req, res, next) => {
@@ -211,12 +237,13 @@ server.on('error', (error) => {
   process.exitCode = 1;
 });
 
-function shutdown() {
+async function shutdown() {
   for (const [taskId, controller] of manager.active) {
     const task = store.getTask(taskId);
     if (task) task.status = 'queued';
     controller.abort(new DOMException('Server stopped', 'AbortError'));
   }
+  await accounts.close().catch(() => {});
   store.save();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2000).unref();
