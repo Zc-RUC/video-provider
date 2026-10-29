@@ -51,6 +51,11 @@ async function locateOutput(task, printedPath) {
 
 export async function downloadWithYtDlp(task, context) {
   if (!binaries.ytDlp) throw new Error('yt-dlp 未安装，无法下载此站点。');
+  const previousError = task.lastError || task.error;
+  if (previousError?.includes('Unable to rename file')) {
+    const existing = await locateOutput(task, null);
+    if (existing) return existing;
+  }
   const progressTemplate = 'DOWNBIT_PROGRESS={"downloaded":%(progress.downloaded_bytes)j,"total":%(progress.total_bytes)j,"estimate":%(progress.total_bytes_estimate)j,"speed":%(progress.speed)j,"eta":%(progress.eta)j}';
   const cookieBrowser = task.cookiesFromBrowser || context.settings.cookiesFromBrowser;
   const args = [

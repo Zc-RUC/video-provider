@@ -16,10 +16,12 @@ export class DownloadManager extends EventEmitter {
     super();
     this.store = store;
     this.partialsDir = partialsDir;
+    this.locksDir = path.join(partialsDir, 'locks');
     this.active = new Map();
     this.lastSaved = 0;
     this.progressState = new Map();
     fs.mkdirSync(partialsDir, { recursive: true });
+    fs.mkdirSync(this.locksDir, { recursive: true });
   }
 
   recover() {
@@ -136,6 +138,31 @@ export class DownloadManager extends EventEmitter {
     }
   }
 
+  acquireLock(taskId) {
+    const file = path.join(this.locksDir, `${taskId}.pid`);
+    try {
+      const owner = Number(fs.readFileSync(file, 'utf8'));
+      if (owner && owner !== process.pid) {
+        try {
+          process.kill(owner, 0);
+          setTimeout(() => this.pump(), 3000).unref();
+          return false;
+        } catch {}
+      }
+      fs.rmSync(file, { force: true });
+    } catch {}
+    try {
+      fs.writeFileSync(file, String(process.pid), { flag: 'wx' });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  releaseLock(taskId) {
+    fs.rmSync(path.join(this.locksDir, `${taskId}.pid`), { force: true });
+  }
+
   pump() {
     const limit = this.store.state.settings.maxConcurrent;
     if (this.active.size >= limit) return;
@@ -147,6 +174,7 @@ export class DownloadManager extends EventEmitter {
   }
 
   async run(task) {
+    if (!this.acquireLock(task.id)) return;
     const controller = new AbortController();
     this.active.set(task.id, controller);
     task.status = 'downloading';
@@ -201,6 +229,7 @@ export class DownloadManager extends EventEmitter {
       task.eta = null;
       task.completedAt = new Date().toISOString();
       task.error = null;
+      task.lastError = null;
       this.touch(task);
     } catch (error) {
       if (controller.signal.aborted || ['paused', 'cancelled'].includes(task.status)) return;
@@ -210,6 +239,7 @@ export class DownloadManager extends EventEmitter {
       task.error = errorMessage(error);
       this.touch(task);
     } finally {
+      this.releaseLock(task.id);
       this.active.delete(task.id);
       this.progressState.delete(task.id);
       this.store.save();
@@ -229,6 +259,7 @@ export class DownloadManager extends EventEmitter {
       this.touch(task);
     } else if (['resume', 'retry'].includes(action)) {
       if (task.status === 'completed') throw new Error('这个文件已经下载完成。');
+      task.lastError = task.error;
       task.status = 'queued';
       task.error = null;
       task.finishRequested = false;

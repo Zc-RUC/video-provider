@@ -9,11 +9,21 @@ export function runProcess(binary, args, { signal, onLine, onStage }) {
       reject(signal.reason);
       return;
     }
-    const child = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: process.platform !== 'win32' });
     let stderr = '';
     let stdoutBuffer = '';
     let stderrBuffer = '';
-    const abort = () => child.kill('SIGTERM');
+    const abort = () => {
+      if (process.platform === 'win32') {
+        spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+        return;
+      }
+      try {
+        process.kill(-child.pid, 'SIGTERM');
+      } catch (error) {
+        if (error.code !== 'ESRCH') child.kill('SIGTERM');
+      }
+    };
     signal.addEventListener('abort', abort, { once: true });
     const consume = (chunk, stream) => {
       const text = String(chunk);
