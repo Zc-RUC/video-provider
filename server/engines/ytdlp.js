@@ -10,6 +10,22 @@ function formatSelector(task) {
   return task.formatId;
 }
 
+async function measureDownloaded(task) {
+  const directory = path.dirname(task.outputPath);
+  const basename = path.basename(task.outputPath, path.extname(task.outputPath));
+  const files = await fs.promises.readdir(directory, { withFileTypes: true }).catch(() => []);
+  let downloaded = 0;
+  for (const entry of files) {
+    if (!entry.isFile() || !entry.name.startsWith(`${basename}.`)) continue;
+    if (/\.(ytdl|json|jpe?g|png|webp|srt|vtt|txt|description)$/i.test(entry.name)) continue;
+    try {
+      const stat = await fs.promises.stat(path.join(directory, entry.name));
+      downloaded += stat.size;
+    } catch {}
+  }
+  return downloaded;
+}
+
 async function locateOutput(task, printedPath) {
   const candidates = [printedPath, task.outputPath].filter(Boolean);
   for (const candidate of candidates) {
@@ -59,6 +75,7 @@ export async function downloadWithYtDlp(task, context) {
     '--', task.sourceUrl,
   ];
   let printedPath = null;
+  let currentTotal = task.total;
   const onLine = (line) => {
     if (line.includes('DOWNBIT_FILE=')) {
       const value = line.slice(line.indexOf('DOWNBIT_FILE=') + 13);
@@ -72,6 +89,7 @@ export async function downloadWithYtDlp(task, context) {
       const number = (input) => Number.isFinite(Number(input)) ? Number(input) : null;
       const downloaded = number(progress.downloaded) || 0;
       const total = number(progress.total) || number(progress.estimate);
+      if (total) currentTotal = total;
       context.onProgress({
         downloaded,
         total,
@@ -81,11 +99,30 @@ export async function downloadWithYtDlp(task, context) {
       });
     } catch {}
   };
-  await runProcess(binaries.ytDlp, args, {
-    signal: context.signal,
-    onLine,
-    onStage: context.onStage,
-  });
+  let firstMeasure = true;
+  const reportFileProgress = async () => {
+    const downloaded = await measureDownloaded(task);
+    if (!downloaded && firstMeasure) return;
+    context.onProgress({
+      downloaded,
+      total: currentTotal,
+      progress: currentTotal ? Math.min(99.5, downloaded / currentTotal * 100) : null,
+      speed: firstMeasure ? 0 : undefined,
+    });
+    firstMeasure = false;
+  };
+  await reportFileProgress();
+  const watcher = setInterval(() => reportFileProgress().catch(() => {}), 1000);
+  watcher.unref();
+  try {
+    await runProcess(binaries.ytDlp, args, {
+      signal: context.signal,
+      onLine,
+      onStage: context.onStage,
+    });
+  } finally {
+    clearInterval(watcher);
+  }
   const output = await locateOutput(task, printedPath);
   if (!output) throw new Error('下载程序已完成，但没有找到输出文件。请检查下载目录权限。');
   return output;
