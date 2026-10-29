@@ -9,7 +9,7 @@
 ## 下载即用（推荐）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
-2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.1.3.zip`。
+2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.1.4.zip`。
 3. 运行启动器：
    - **macOS**：双击 `Downbit.command`（如系统提示，先右键脚本并选择“打开”）。
    - **Windows**：双击 `Downbit.bat`。

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { parseContentRange } from '../utils.js';
+import { downloadWithCurl, isDnsError } from './curl.js';
 
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/131 Safari/537.36';
 
@@ -45,8 +46,8 @@ export async function pipeToFile(response, destination, { append = false, onByte
   await pipeline(Readable.fromWeb(response.body), meter, createWriteStream(destination, { flags: append ? 'a' : 'w' }), { signal });
 }
 
-async function rangeProbe(url, signal) {
-  const response = await fetchMedia(url, { signal, headers: { range: 'bytes=0-0' } });
+async function rangeProbe(url, signal, requestHeaders = {}) {
+  const response = await fetchMedia(url, { signal, headers: { ...requestHeaders, range: 'bytes=0-0' } });
   if (response.status !== 206) {
     await response.body?.cancel().catch(() => {});
     return null;
@@ -59,7 +60,7 @@ async function rangeProbe(url, signal) {
 async function downloadSingle(task, target, context, retryWithoutRange = true) {
   const part = `${target}.part`;
   let existing = await fileSize(part);
-  const headers = existing ? { range: `bytes=${existing}-` } : {};
+  const headers = { ...(task.requestHeaders || {}), ...(existing ? { range: `bytes=${existing}-` } : {}) };
   let response = await fetchMedia(task.mediaUrl, { signal: context.signal, headers });
   if (response.status === 416 && retryWithoutRange) {
     await response.body?.cancel().catch(() => {});
@@ -120,7 +121,7 @@ async function downloadChunk(task, target, chunk, index, total, context, report)
   const start = chunk.start + existing;
   const response = await fetchMedia(task.mediaUrl, {
     signal: context.signal,
-    headers: { range: `bytes=${start}-${chunk.end}` },
+    headers: { ...(task.requestHeaders || {}), range: `bytes=${start}-${chunk.end}` },
   });
   if (response.status !== 206) {
     await response.body?.cancel().catch(() => {});
@@ -201,7 +202,7 @@ async function downloadParallel(task, target, total, context) {
   context.onProgress({ downloaded: total, total, progress: 100 });
 }
 
-export async function downloadDirect(task, context) {
+async function downloadDirectWithFetch(task, context) {
   const target = task.mediaPath || task.outputPath;
   const existing = await fileSize(target);
   if (existing > 0) {
@@ -211,11 +212,20 @@ export async function downloadDirect(task, context) {
   await fs.promises.mkdir(path.dirname(target), { recursive: true });
   const canParallel = (task.total || 0) >= 2 * 1024 * 1024 && (context.settings.connections || 4) > 1;
   if (canParallel) {
-    const total = await rangeProbe(task.mediaUrl, context.signal).catch(() => null);
+    const total = await rangeProbe(task.mediaUrl, context.signal, task.requestHeaders || {}).catch(() => null);
     if (total) {
       await downloadParallel(task, target, total, context);
       return;
     }
   }
   await downloadSingle(task, target, context);
+}
+
+export async function downloadDirect(task, context) {
+  try {
+    return await downloadDirectWithFetch(task, context);
+  } catch (error) {
+    if (isDnsError(error)) return downloadWithCurl(task, context);
+    throw error;
+  }
 }

@@ -74,6 +74,7 @@ export class DownloadManager extends EventEmitter {
       thumbnail: info.thumbnail,
       duration: info.duration,
       mediaUrl: format.url || info.mediaUrl,
+      requestHeaders: info.requestHeaders || null,
       formatId: format.id,
       formatLabel: audioOnly && (needsConversion || info.kind === 'ytdlp') ? '音频 · MP3 192kbps' : format.label,
       formatHasVideo: format.hasVideo,

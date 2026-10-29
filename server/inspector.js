@@ -1,7 +1,9 @@
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { binaries } from './binaries.js';
+import { isDnsError, probeWithCurl } from './engines/curl.js';
 import { parseMaster } from './hls-parser.js';
 import { errorMessage, extensionFrom, filenameFrom, id, isHttpUrl, normalizeUrl } from './utils.js';
 
@@ -45,11 +47,11 @@ async function probe(url) {
   return result;
 }
 
-function directInfo(url, details) {
+function directInfo(url, details, meta = {}) {
   const mime = details.contentType.split(';')[0].toLowerCase();
   const filename = filenameFrom(details.finalUrl, details.contentDisposition);
   const ext = extensionFrom(details.finalUrl, details.contentType);
-  const title = filename.replace(new RegExp(`${ext.replace('.', '\\.')}$`, 'i'), '').replace(/[-_]+/g, ' ') || '未命名媒体';
+  const title = meta.title || filename.replace(new RegExp(`${ext.replace('.', '\\.')}$`, 'i'), '').replace(/[-_]+/g, ' ') || '未命名媒体';
   const audio = mime.startsWith('audio/') || ['.mp3', '.m4a', '.aac', '.ogg', '.wav', '.flac'].includes(ext);
   return {
     kind: 'direct',
@@ -58,10 +60,11 @@ function directInfo(url, details) {
     originalInput: url,
     mediaUrl: details.finalUrl,
     title,
-    uploader: sourceName(details.finalUrl),
-    source: sourceName(details.finalUrl),
-    thumbnail: null,
-    duration: null,
+    uploader: meta.uploader || sourceName(details.finalUrl),
+    source: meta.source || sourceName(details.finalUrl),
+    thumbnail: meta.thumbnail || null,
+    duration: meta.duration || null,
+    requestHeaders: meta.requestHeaders || null,
     size: details.size,
     acceptRanges: details.acceptRanges,
     extension: ext,
@@ -274,6 +277,77 @@ async function inspectSite(input, options = {}) {
   }
 }
 
+async function probeWebMediaWithFetch(url, pageUrl) {
+  const response = await fetch(url, {
+    headers: { 'user-agent': USER_AGENT, referer: pageUrl, range: 'bytes=0-0' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!response.ok && response.status !== 206) throw new Error(`媒体地址返回 HTTP ${response.status}`);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.startsWith('video/') && !contentType.includes('octet-stream')) throw new Error('地址没有返回视频文件');
+  const details = {
+    finalUrl: response.url || url,
+    contentType,
+    contentDisposition: response.headers.get('content-disposition') || '',
+    size: Number(/\/(\d+)$/.exec(response.headers.get('content-range') || '')?.[1]) || Number(response.headers.get('content-length')) || null,
+    acceptRanges: (response.headers.get('accept-ranges') || '').includes('bytes'),
+  };
+  await response.body?.cancel().catch(() => {});
+  return details;
+}
+
+async function probeWebMedia(url, pageUrl) {
+  try {
+    return await probeWebMediaWithFetch(url, pageUrl);
+  } catch (error) {
+    if (isDnsError(error)) return probeWithCurl(url, pageUrl);
+    throw error;
+  }
+}
+
+async function inspectBrowserMedia(url) {
+  const worker = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'browser-media-worker.js');
+  let result;
+  try {
+    const { stdout } = await execFileAsync(process.execPath, [worker, url], {
+      timeout: 90000,
+      maxBuffer: 2 * 1024 * 1024,
+      windowsHide: true,
+    });
+    result = JSON.parse(stdout);
+  } catch (error) {
+    const detail = error.stderr || error.message;
+    throw new Error(`通用网页媒体解析失败：${String(detail).slice(-500)}`);
+  }
+  const pageTitle = await fetch(url, {
+    headers: { 'user-agent': USER_AGENT },
+    signal: AbortSignal.timeout(20000),
+  }).then(async (response) => {
+    const html = await response.text();
+    const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] || '';
+    return title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").trim();
+  }).catch(() => '');
+  const seen = new Set();
+  for (const candidate of result.candidates) {
+    const mediaUrl = candidate.src;
+    if (!isHttpUrl(mediaUrl) || seen.has(mediaUrl) || !/\.mp4(?:$|\?)/i.test(mediaUrl) || /ad-i18n-dsp|doubleclick|\/ads\/|advert|banner/i.test(mediaUrl)) continue;
+    seen.add(mediaUrl);
+    try {
+      const details = await probeWebMedia(mediaUrl, url);
+      return directInfo(url, details, {
+        title: pageTitle || result.title,
+        uploader: sourceName(url),
+        source: sourceName(url),
+        thumbnail: candidate.poster || null,
+        duration: candidate.duration,
+        requestHeaders: { referer: url },
+      });
+    } catch {}
+  }
+  throw new Error('页面中的媒体地址都无法访问。');
+}
+
 export class Inspector {
   constructor(settings, accounts) {
     this.settings = settings;
@@ -314,8 +388,15 @@ export class Inspector {
           info = await inspectSite(url, config);
         }
       } catch (error) {
-        if (error.message.startsWith('解析失败：')) throw error;
-        info = await inspectSite(url, config);
+        if (error.message.startsWith('解析失败：')) {
+          info = await inspectBrowserMedia(url);
+        } else {
+          try {
+            info = await inspectSite(url, config);
+          } catch {
+            info = await inspectBrowserMedia(url);
+          }
+        }
       }
     }
     info.cookiesFromBrowser = config.cookiesFromBrowser || 'none';
