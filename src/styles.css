@@ -255,6 +255,7 @@ a { color: inherit; }
 .setting-row p { color: #9c958b; font-size: 9px; margin: 5px 0 0; }
 .account-card { display: flex; align-items: center; gap: 13px; padding: 18px 23px; }
 .account-logo { width: 39px; height: 39px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; background: #fbe4ec; color: #d85b86; font-size: 19px; font-weight: 700; }
+.account-logo.xhs-logo { background: #fbe4e4; color: #d85b65; font-size: 16px; }
 .account-details { flex: 1; min-width: 0; }
 .account-details strong { display: block; font-size: 12px; font-weight: 600; }
 .account-details p { margin: 5px 0 0; color: #8f867d; font-size: 10px; }

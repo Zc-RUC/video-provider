@@ -9,7 +9,7 @@
 ## 下载即用（推荐）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
-2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.1.1.zip`。
+2. 前往 [Releases](https://github.com/Zc-RUC/downbit-local/releases/latest)，下载并解压 `Downbit-Local-1.1.2.zip`。
 3. 运行启动器：
    - **macOS**：双击 `Downbit.command`（如系统提示，先右键脚本并选择“打开”）。
    - **Windows**：双击 `Downbit.bat`。
@@ -72,7 +72,8 @@ CLI 会复用正在运行的本地服务；服务未运行时会自动启动。�
 - 默认下载目录：`~/Downloads/Downbit`，可在设置页修改。
 - 自定义环境：`YT_DLP_PATH`、`FFMPEG_PATH`、`DOWNBIT_API_PORT`、`DOWNBIT_DOWNLOAD_DIR`、`CHROME_PATH`。
 - B 站账号与会员：在「设置 → 账号与会员」点击“登录 B 站”，会打开 Downbit 独立的 Chrome 登录窗口。登录成功后自动识别账号和会员状态、保存会话，并让网页与 CLI 共用。此功能需要本机安装 Chrome，不读取日常浏览器配置；会话文件权限为 `0600`。
-- 高码率、4K、HDR 等版本取决于视频和账号权限，不会绕过会员限制。其他网站可在设置页选择系统浏览器 Cookies，CLI 对应 `--cookies <browser>`；应用内 B 站会话优先。
+- 小红书：在「设置 → 账号与会员」点击“登录小红书”，完成登录后自动识别 `web_session` 并保存专用会话。分享链接和登录跳转会自动还原为作品页，再由 `XiaoHongShu` 提取器使用同一会话解析和下载。
+- 高码率、4K、HDR 等版本取决于视频和账号权限，不会绕过会员限制。其他网站可在设置页选择系统浏览器 Cookies，CLI 对应 `--cookies <browser>`；应用内账号会话优先。
 
 ## 技术与隐私
 

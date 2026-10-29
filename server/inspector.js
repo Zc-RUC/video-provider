@@ -141,6 +141,24 @@ function isBilibili(value) {
   }
 }
 
+function isXiaohongshu(value) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === 'xiaohongshu.com' || hostname.endsWith('.xiaohongshu.com');
+  } catch {
+    return false;
+  }
+}
+
+function xiaohongshuTarget(value) {
+  const url = new URL(value);
+  if (url.hostname === 'www.xiaohongshu.com' && url.pathname === '/login') {
+    const redirect = url.searchParams.get('redirectPath');
+    if (redirect && isHttpUrl(redirect)) return normalizeUrl(redirect);
+  }
+  return value;
+}
+
 async function inspectSite(input, options = {}) {
   if (!binaries.ytDlp) {
     throw new Error('站点解析需要 yt-dlp。请在项目目录运行 npm run postinstall，或设置 YT_DLP_PATH。');
@@ -267,8 +285,12 @@ export class Inspector {
     const input = String(rawInput || '').trim();
     if (!input) throw new Error('请先粘贴链接或输入搜索内容。');
     const config = { ...this.settings(), ...overrides };
-    if (this.accounts && isBilibili(input)) {
-      const cookieFile = this.accounts.cookiePath();
+    if (this.accounts) {
+      const cookieFile = isBilibili(input)
+        ? this.accounts.bilibili?.cookiePath()
+        : isXiaohongshu(input)
+          ? this.accounts.xiaohongshu?.cookiePath()
+          : null;
       if (cookieFile) {
         config.cookieFile = cookieFile;
         config.cookiesFromBrowser = 'none';
@@ -278,7 +300,8 @@ export class Inspector {
     if (!isHttpUrl(input)) {
       info = await inspectSite(input, config);
     } else {
-      const url = normalizeUrl(input);
+      const normalized = normalizeUrl(input);
+      const url = isXiaohongshu(normalized) ? xiaohongshuTarget(normalized) : normalized;
       try {
         const details = await probe(url);
         const mime = details.contentType.split(';')[0].toLowerCase();

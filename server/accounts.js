@@ -4,14 +4,48 @@ import os from 'node:os';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
 
-const LOGIN_URL = 'https://passport.bilibili.com/login';
-const ACCOUNT_URL = 'https://api.bilibili.com/x/web-interface/nav';
-const COOKIE_URLS = [
-  'https://www.bilibili.com',
-  'https://api.bilibili.com',
-  'https://passport.bilibili.com',
-  'https://www.bilivideo.com',
-];
+const SITE_CONFIG = {
+  bilibili: {
+    loginUrl: 'https://passport.bilibili.com/login',
+    accountUrl: 'https://api.bilibili.com/x/web-interface/nav',
+    cookieUrls: [
+      'https://www.bilibili.com',
+      'https://api.bilibili.com',
+      'https://passport.bilibili.com',
+      'https://www.bilivideo.com',
+    ],
+    async readAccount(page) {
+      const payload = JSON.parse(await page.evaluate(() => document.body.innerText));
+      const data = payload.data || {};
+      const loggedIn = Boolean(data.isLogin && data.uname);
+      return {
+        loggedIn,
+        username: loggedIn ? data.uname : null,
+        vipLabel: loggedIn ? (data.vipStatus === 1 ? (data.vipType === 2 ? '年度大会员' : '大会员') : '普通账号') : null,
+        cookies: await page.cookies(...SITE_CONFIG.bilibili.cookieUrls),
+      };
+    },
+  },
+  xiaohongshu: {
+    loginUrl: 'https://www.xiaohongshu.com/login',
+    accountUrl: 'https://www.xiaohongshu.com',
+    cookieUrls: [
+      'https://www.xiaohongshu.com',
+      'https://edith.xiaohongshu.com',
+      'https://www.xiaohongshu.com/discovery/item',
+    ],
+    async readAccount(page) {
+      const cookies = await page.cookies(...SITE_CONFIG.xiaohongshu.cookieUrls);
+      const loggedIn = cookies.some((cookie) => cookie.name === 'web_session' && cookie.value);
+      return {
+        loggedIn,
+        username: loggedIn ? '小红书账号' : null,
+        vipLabel: loggedIn ? '已登录账号' : null,
+        cookies,
+      };
+    },
+  },
+};
 
 function fromPath(name) {
   for (const directory of (process.env.PATH || '').split(path.delimiter)) {
@@ -66,11 +100,14 @@ export function netscapeCookies(cookies) {
 }
 
 export class AccountManager extends EventEmitter {
-  constructor(dataDir) {
+  constructor(dataDir, site = 'bilibili') {
     super();
-    this.cookieFile = path.join(dataDir, 'cookies', 'bilibili.txt');
-    this.profileDir = path.join(dataDir, 'browser-profile');
-    this.statusFile = path.join(dataDir, 'bilibili-account.json');
+    this.site = site;
+    this.config = SITE_CONFIG[site];
+    if (!this.config) throw new Error(`不支持的账号站点：${site}`);
+    this.cookieFile = path.join(dataDir, 'cookies', `${site}.txt`);
+    this.profileDir = site === 'bilibili' ? path.join(dataDir, 'browser-profile') : path.join(dataDir, `browser-profile-${site}`);
+    this.statusFile = path.join(dataDir, `${site}-account.json`);
     this.browser = null;
     this.page = null;
     this.launching = null;
@@ -138,9 +175,9 @@ export class AccountManager extends EventEmitter {
   async login() {
     const browser = await this.ensureBrowser(false);
     const pages = await browser.pages();
-    this.page = pages.find((page) => page.url().includes('bilibili.com')) || await browser.newPage();
+    this.page = pages.find((page) => page.url().includes(this.site === 'bilibili' ? 'bilibili.com' : 'xiaohongshu.com')) || await browser.newPage();
     await this.page.bringToFront();
-    await this.page.goto(LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await this.page.goto(this.config.loginUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
     this.awaitingLogin = true;
     this.save();
     if (this.loginTimer) clearInterval(this.loginTimer);
@@ -166,18 +203,16 @@ export class AccountManager extends EventEmitter {
       const browser = await this.ensureBrowser(true);
       const page = await browser.newPage();
       try {
-        await page.goto(ACCOUNT_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        const payload = JSON.parse(await page.evaluate(() => document.body.innerText));
-        const data = payload.data || {};
-        const loggedIn = Boolean(data.isLogin && data.uname);
+        await page.goto(this.config.accountUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        const account = await this.config.readAccount(page);
+        const loggedIn = account.loggedIn;
         if (loggedIn) {
-          const cookies = await page.cookies(...COOKIE_URLS);
           fs.mkdirSync(path.dirname(this.cookieFile), { recursive: true, mode: 0o700 });
-          fs.writeFileSync(this.cookieFile, netscapeCookies(cookies), { mode: 0o600 });
+          fs.writeFileSync(this.cookieFile, netscapeCookies(account.cookies), { mode: 0o600 });
           this.status = {
             loggedIn: true,
-            username: data.uname,
-            vipLabel: data.vipStatus === 1 ? (data.vipType === 2 ? '年度大会员' : '大会员') : '普通账号',
+            username: account.username,
+            vipLabel: account.vipLabel,
             updatedAt: new Date().toISOString(),
           };
           this.awaitingLogin = false;
@@ -207,8 +242,8 @@ export class AccountManager extends EventEmitter {
       const browser = await this.ensureBrowser(true);
       const pages = await browser.pages();
       const page = pages[0] || await this.browser.newPage();
-      const client = await page.createCDPSession();
-      await client.send('Network.clearBrowserCookies');
+      const cookies = await page.cookies(...this.config.cookieUrls);
+      if (cookies.length) await page.deleteCookie(...cookies);
     }
     await this.closeBrowser();
     await fs.promises.rm(this.cookieFile, { force: true });

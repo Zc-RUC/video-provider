@@ -46,6 +46,20 @@ export default function Settings({ settings, capabilities, accounts, onSave, onC
             {accounts?.bilibili?.loggedIn && <button className="account-logout" onClick={() => onAccountAction('bilibili', 'logout').catch(() => {})}>退出</button>}
           </div>
         </div>
+        <div className="account-card">
+          <span className="account-logo xhs-logo">书</span>
+          <div className="account-details">
+            <strong>小红书</strong>
+            <p>{accounts?.xiaohongshu?.awaitingLogin ? '登录窗口已打开，完成后会自动同步账号状态' : accounts?.xiaohongshu?.loggedIn ? `${accounts.xiaohongshu.username} · ${accounts.xiaohongshu.vipLabel}` : '登录后解析需要账号权限的作品和画质'}</p>
+            <small>独立的小红书登录窗口和会话文件，分享链接与登录跳转都会自动处理。</small>
+          </div>
+          <span className={`account-status ${accounts?.xiaohongshu?.loggedIn ? 'is-active' : ''}`}>{accounts?.xiaohongshu?.loggedIn ? '已登录' : '未登录'}</span>
+          <div className="account-actions">
+            <button disabled={!accounts?.xiaohongshu?.available || accounts?.xiaohongshu?.awaitingLogin} onClick={() => onAccountAction('xiaohongshu', 'login').catch(() => {})}>{accounts?.xiaohongshu?.awaitingLogin ? '等待登录…' : accounts?.xiaohongshu?.loggedIn ? '重新登录' : '登录小红书'}</button>
+            <button onClick={() => onAccountAction('xiaohongshu', 'refresh').catch(() => {})}>刷新状态</button>
+            {accounts?.xiaohongshu?.loggedIn && <button className="account-logout" onClick={() => onAccountAction('xiaohongshu', 'logout').catch(() => {})}>退出</button>}
+          </div>
+        </div>
       </section>
 
       <section className="settings-group">

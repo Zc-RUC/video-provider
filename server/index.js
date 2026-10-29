@@ -16,9 +16,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.resolve(process.env.DOWNBIT_DATA_DIR || path.join(root, '.downbit'));
 const store = new Store(dataDir);
 const accounts = new AccountManager(dataDir);
-const inspector = new Inspector(() => store.state.settings, accounts);
+const xiaohongshu = new AccountManager(dataDir, 'xiaohongshu');
+const accountManagers = { bilibili: accounts, xiaohongshu };
+const inspector = new Inspector(() => store.state.settings, accountManagers);
 const manager = new DownloadManager(store, path.join(dataDir, 'partials'));
-accounts.on('change', () => manager.emitChange());
+for (const accountManager of Object.values(accountManagers)) accountManager.on('change', () => manager.emitChange());
 const app = express();
 const port = Number(process.env.DOWNBIT_API_PORT || process.env.PORT || 4317);
 const host = '127.0.0.1';
@@ -43,7 +45,7 @@ const state = () => ({
   tasks: manager.snapshot(),
   settings: store.state.settings,
   capabilities: capabilityInfo,
-  accounts: { bilibili: accounts.snapshot() },
+  accounts: { bilibili: accounts.snapshot(), xiaohongshu: xiaohongshu.snapshot() },
 });
 
 app.get('/api/health', (req, res) => res.json({ service: 'downbit-local', version: 1 }));
@@ -82,6 +84,16 @@ app.post('/api/accounts/bilibili/logout', async (req, res, next) => {
     next(error);
   }
 });
+
+for (const action of ['login', 'refresh', 'logout']) {
+  app.post(`/api/accounts/xiaohongshu/${action}`, async (req, res, next) => {
+    try {
+      res.json(await xiaohongshu[action]());
+    } catch (error) {
+      next(error);
+    }
+  });
+}
 
 app.post('/api/inspect', async (req, res, next) => {
   try {
@@ -244,6 +256,7 @@ async function shutdown() {
     controller.abort(new DOMException('Server stopped', 'AbortError'));
   }
   await accounts.close().catch(() => {});
+  await xiaohongshu.close().catch(() => {});
   store.save();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2000).unref();

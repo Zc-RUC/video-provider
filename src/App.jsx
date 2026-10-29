@@ -188,12 +188,13 @@ export default function App() {
     }
   };
   const accountAction = async (site, action) => {
+    const siteName = site === 'bilibili' ? 'B 站' : '小红书';
     try {
       const status = await api.accountAction(site, action);
       setAccounts((current) => ({ ...current, [site]: status }));
-      if (action === 'login') notify('已打开 B 站登录窗口，登录成功后会自动同步');
-      else if (action === 'refresh') notify(status.loggedIn ? `已同步：${status.username} · ${status.vipLabel}` : '尚未检测到 B 站登录');
-      else if (action === 'logout') notify('已退出应用内的 B 站账号');
+      if (action === 'login') notify(`已打开${siteName}登录窗口，登录成功后会自动同步`);
+      else if (action === 'refresh') notify(status.loggedIn ? `已同步：${status.username} · ${status.vipLabel}` : `尚未检测到${siteName}登录`);
+      else if (action === 'logout') notify(`已退出应用内的${siteName}账号`);
       return status;
     } catch (error) {
       notify(error.message, 'error');
