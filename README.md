@@ -9,14 +9,14 @@
 ## 下载即用（推荐）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
-2. 前往 [Releases](https://github.com/Zc-RUC/video-provider/releases/latest)，下载并解压 `Video-Provider-1.2.0.zip`。
+2. 下载并解压 [Video Provider 1.2.0 源码包](https://github.com/Zc-RUC/video-provider/archive/refs/tags/v1.2.0.zip)。
 3. 运行启动器：
    - **macOS**：双击 `VideoProvider.command`（如系统提示，先右键脚本并选择“打开”）。
    - **Windows**：双击 `VideoProvider.bat`。
    - **Linux**：在目录中运行 `./VideoProvider.command`。
 4. 首次启动会安装项目依赖以及 yt-dlp / FFmpeg，随后自动打开 `http://127.0.0.1:4317`。
 
-Release 已包含构建好的前端，不需要安装开发工具。首次安装和后续媒体解析需要网络；请保持启动窗口运行，关闭窗口即可停止本地服务。
+启动器会按需安装依赖并构建前端。首次安装和后续媒体解析需要网络；请保持启动窗口运行，关闭窗口即可停止本地服务。
 
 ## 从源码运行
 
