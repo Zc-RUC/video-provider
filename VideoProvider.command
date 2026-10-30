@@ -21,5 +21,5 @@ elif [ ! -d node_modules ]; then
 fi
 
 export DOWNBIT_OPEN_BROWSER=1
-echo "Downbit Local 即将打开。关闭此窗口即可停止服务。"
+echo "Video Provider 即将打开。关闭此窗口即可停止服务。"
 npm start

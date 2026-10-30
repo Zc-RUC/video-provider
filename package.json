@@ -1,14 +1,14 @@
 {
-  "name": "downbit-local",
-  "version": "1.1.4",
+  "name": "video-provider",
+  "version": "1.2.0",
   "type": "module",
   "description": "A local-first media downloader with a web workspace and CLI.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zc-RUC/downbit-local.git"
+    "url": "git+https://github.com/Zc-RUC/video-provider.git"
   },
-  "homepage": "https://github.com/Zc-RUC/downbit-local#readme",
+  "homepage": "https://github.com/Zc-RUC/video-provider#readme",
   "keywords": [
     "downloader",
     "media",
@@ -18,6 +18,7 @@
     "local-first"
   ],
   "bin": {
+    "video-provider": "./cli/downbit.js",
     "downbit": "./cli/downbit.js"
   },
   "scripts": {

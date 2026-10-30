@@ -29,13 +29,13 @@ function help() {
   console.log(`Downbit · 本地视频与音频下载器
 
 用法
-  downbit <url>                  使用默认设置下载
-  downbit get [-a] [-q 720] [-f id] [-o ~/Movies] <url>
-  downbit open <url>              交给工作空间下载，不等待完成
-  downbit info <url|搜索词>        查看标题与来源
-  downbit formats <url>           查看可下载格式
-  downbit list                    查看网页与 CLI 的全部任务
-  downbit pause|resume|cancel|finish|remove <任务ID>
+  video-provider <url>                  使用默认设置下载
+  video-provider get [-a] [-q 720] [-f id] [-o ~/Movies] <url>
+  video-provider open <url>              交给工作空间下载，不等待完成
+  video-provider info <url|搜索词>        查看标题与来源
+  video-provider formats <url>           查看可下载格式
+  video-provider list                    查看网页与 CLI 的全部任务
+  video-provider pause|resume|cancel|finish|remove <任务ID>
 
 全局选项
   --json                         输出机器可读 JSON
@@ -43,14 +43,14 @@ function help() {
   --cookies <browser>            本次解析使用浏览器登录状态
   --port <port>                  本地服务端口，默认 4317
 
-首次使用 npm link 后可直接运行 downbit；也可运行 npm run cli -- <命令>。`);
+首次使用 npm link 后可直接运行 video-provider；也可运行 npm run cli -- <命令>。`);
 }
 
 async function health() {
   try {
     const response = await fetch(`${base}/api/health`, { signal: AbortSignal.timeout(700) });
     const data = await response.json();
-    return data.service === 'downbit-local';
+    return data.service === 'video-provider-local';
   } catch {
     return false;
   }
@@ -180,15 +180,15 @@ try {
       console.log(`${task.id.slice(0, 8)}  ${task.status.padEnd(11)} ${String(Math.floor(task.progress || 0)).padStart(3)}%  ${task.title}`);
     }
   } else if (['pause', 'resume', 'retry', 'cancel', 'finish'].includes(command)) {
-    if (!input) throw new Error(`用法: downbit ${command} <任务ID>`);
+    if (!input) throw new Error(`用法: video-provider ${command} <任务ID>`);
     const task = await request(`/api/tasks/${await taskId(input)}/action`, { method: 'POST', body: JSON.stringify({ action: command }) });
     if (options.json) print(task); else console.log(`${task.title}: ${task.status}`);
   } else if (command === 'remove') {
-    if (!input) throw new Error('用法: downbit remove <任务ID>');
+    if (!input) throw new Error('用法: video-provider remove <任务ID>');
     await request(`/api/tasks/${await taskId(input)}`, { method: 'DELETE' });
     if (options.json) print({ removed: input }); else console.log('已移除记录，本地文件保留。');
   } else if (['info', 'formats'].includes(command)) {
-    if (!input) throw new Error(`用法: downbit ${command} <url|搜索词>`);
+    if (!input) throw new Error(`用法: video-provider ${command} <url|搜索词>`);
     const info = await inspect(input);
     if (command === 'info' || options.json) print(info);
     else if (info.kind === 'playlist') {
@@ -211,6 +211,6 @@ try {
   }
 } catch (error) {
   if (options.json) console.error(JSON.stringify({ error: error.message }));
-  else console.error(`downbit: ${error.message}`);
+  else console.error(`video-provider: ${error.message}`);
   process.exitCode = 1;
 }

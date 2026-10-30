@@ -210,7 +210,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <button className="brand" onClick={() => navigate('downloads')} aria-label="Downbit 首页"><span className="brand-mark"><ArrowDownToLine size={20} /></span><span>Downbit<small>LOCAL WORKSPACE</small></span></button>
+        <button className="brand" onClick={() => navigate('downloads')} aria-label="Video Provider 首页"><span className="brand-mark"><ArrowDownToLine size={20} /></span><span>Video Provider<small>LOCAL WORKSPACE</small></span></button>
         <button className="sidebar-new" onClick={newDownload}><Plus size={17} /><span>新建下载</span><kbd>⌘ K</kbd></button>
         <nav className="sidebar-nav" aria-label="主导航">
           <span className="nav-section-label">工作空间</span>
@@ -221,7 +221,7 @@ export default function App() {
         <div className="sidebar-bottom">
           <button className="storage-card" onClick={() => navigate('settings')}><span><FolderOpen size={16} /></span><div><strong>{basename(settings.downloadDir)}</strong><small>默认下载位置</small></div><ChevronRight size={14} /></button>
           <div className="local-status"><span className={connected ? 'connected' : ''} /><div><strong>{connected ? '本地服务运行中' : '正在重新连接'}</strong><small>你的文件，只属于你</small></div></div>
-          <div className="sidebar-foot"><span>Downbit · 本地复刻版</span><button title="查看命令行" onClick={() => navigate('cli')}><CircleHelp size={15} /></button></div>
+          <div className="sidebar-foot"><span>Video Provider</span><button title="查看命令行" onClick={() => navigate('cli')}><CircleHelp size={15} /></button></div>
         </div>
       </aside>
 

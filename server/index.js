@@ -48,7 +48,7 @@ const state = () => ({
   accounts: { bilibili: accounts.snapshot(), xiaohongshu: xiaohongshu.snapshot() },
 });
 
-app.get('/api/health', (req, res) => res.json({ service: 'downbit-local', version: 1 }));
+app.get('/api/health', (req, res) => res.json({ service: 'video-provider-local', version: 1 }));
 app.get('/api/state', (req, res) => res.json(state()));
 app.get('/api/events', (req, res) => {
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
@@ -239,13 +239,13 @@ function openWorkspace() {
 }
 
 const server = app.listen(port, host, () => {
-  console.log(`[downbit] Local service: http://${host}:${port}`);
-  if (fs.existsSync(path.join(dist, 'index.html'))) console.log(`[downbit] Workspace: http://${host}:${port}`);
+  console.log(`[video-provider] Local service: http://${host}:${port}`);
+  if (fs.existsSync(path.join(dist, 'index.html'))) console.log(`[video-provider] Workspace: http://${host}:${port}`);
   manager.recover();
   openWorkspace();
 });
 server.on('error', (error) => {
-  console.error(`[downbit] ${error.message}`);
+  console.error(`[video-provider] ${error.message}`);
   process.exitCode = 1;
 });
 

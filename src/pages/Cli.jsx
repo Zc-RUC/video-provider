@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { Bot, Check, ChevronRight, Clipboard, Code2, ListVideo, Terminal, Workflow } from 'lucide-react';
 
-const commandCode = `# 让 downbit 命令在终端中可用
+const commandCode = `# 让 video-provider 命令在终端中可用
 npm link
 
 # 直接使用默认设置
- downbit <url>
+ video-provider <url>
 
 # 只保留音频，或指定画质与目录
- downbit get -a <url>
- downbit get -q 720 -o ~/Movies <url>
+ video-provider get -a <url>
+ video-provider get -q 720 -o ~/Movies <url>
 
 # 下载前查看信息与格式
- downbit info <url>
- downbit formats <url>
+ video-provider info <url>
+ video-provider formats <url>
 
 # 查看所有任务，或交给工作空间
- downbit list
- downbit open <url>`;
-const jsonCode = `$ downbit info <url> --json
+ video-provider list
+ video-provider open <url>`;
+const jsonCode = `$ video-provider info <url> --json
 {
   "kind": "ytdlp",
   "title": "Big Buck Bunny",
@@ -27,7 +27,7 @@ const jsonCode = `$ downbit info <url> --json
   "defaultFormat": "recommended"
 }
 
-$ downbit list --json
+$ video-provider list --json
 [
   {
     "id": "2c1f…",
@@ -53,7 +53,7 @@ export default function Cli() {
         <div className="terminal-mark"><Terminal size={44} strokeWidth={1.25} /><span>local-first</span></div>
       </section>
       <section className="cli-terminal">
-        <div className="terminal-top"><div className="terminal-lights"><i /><i /><i /></div><span>downbit — zsh</span><button onClick={copy}>{copied ? <Check size={15} /> : <Clipboard size={15} />}{copied ? '已复制' : '复制'}</button></div>
+        <div className="terminal-top"><div className="terminal-lights"><i /><i /><i /></div><span>video-provider — zsh</span><button onClick={copy}>{copied ? <Check size={15} /> : <Clipboard size={15} />}{copied ? '已复制' : '复制'}</button></div>
         <div className="terminal-tabs"><button className={tab === 'commands' ? 'active' : ''} onClick={() => setTab('commands')}><Code2 size={14} /> 常用命令</button><button className={tab === 'json' ? 'active' : ''} onClick={() => setTab('json')}><Bot size={14} /> JSON 输出</button></div>
         <pre><code>{code}</code></pre>
         <div className="terminal-foot"><span><i /> 本地服务已连接</span><span>UTF-8 · zsh</span></div>
@@ -63,7 +63,7 @@ export default function Cli() {
         <article><span><ListVideo size={20} /></span><h3>完整地管理任务</h3><p>使用任务 ID 暂停、继续或取消。直播录制也能通过 finish 停止并保存。</p></article>
         <article><span><Bot size={20} /></span><h3>为自动化而设计</h3><p>每个命令都支持 --json，输出结构化结果，方便脚本和智能体读取。</p></article>
       </section>
-      <section className="cli-task-commands"><h2>任务管理</h2><div><code>downbit pause &lt;id&gt;</code><ChevronRight size={14} /><code>downbit resume &lt;id&gt;</code><ChevronRight size={14} /><code>downbit finish &lt;id&gt;</code><ChevronRight size={14} /><code>downbit remove &lt;id&gt;</code></div></section>
+      <section className="cli-task-commands"><h2>任务管理</h2><div><code>video-provider pause &lt;id&gt;</code><ChevronRight size={14} /><code>video-provider resume &lt;id&gt;</code><ChevronRight size={14} /><code>video-provider finish &lt;id&gt;</code><ChevronRight size={14} /><code>video-provider remove &lt;id&gt;</code></div></section>
     </div>
   );
 }

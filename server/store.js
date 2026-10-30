@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const defaults = {
-  downloadDir: process.env.DOWNBIT_DOWNLOAD_DIR || path.join(os.homedir(), 'Downloads', 'Downbit'),
+  downloadDir: process.env.DOWNBIT_DOWNLOAD_DIR || path.join(os.homedir(), 'Downloads', 'VideoProvider'),
   maxConcurrent: 2,
   connections: 4,
   resumeOnStart: true,

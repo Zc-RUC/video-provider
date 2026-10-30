@@ -31,7 +31,7 @@ if not exist dist\index.html (
   if errorlevel 1 goto error
 )
 set DOWNBIT_OPEN_BROWSER=1
-echo Downbit Local 即将打开。关闭此窗口即可停止服务。
+echo Video Provider 即将打开。关闭此窗口即可停止服务。
 call npm start
 exit /b %errorlevel%
 :error
