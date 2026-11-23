@@ -2,6 +2,7 @@
   "name": "video-provider",
   "version": "1.2.0",
   "type": "module",
+  "main": "desktop/main.cjs",
   "description": "A local-first media downloader with a web workspace and CLI.",
   "license": "MIT",
   "repository": {
@@ -25,6 +26,10 @@
     "dev": "concurrently -k -n API,WEB \"node --watch server/index.js\" \"vite --host 127.0.0.1\"",
     "build": "vite build",
     "start": "node server/index.js",
+    "desktop": "electron .",
+    "dist:mac": "bash scripts/package-mac.sh",
+    "icon:mac": "bash scripts/build-icon.sh",
+    "check": "node --check server/index.js && node --check server/manager.js && node --check server/inspector.js && node --check server/binaries.js && node --check server/accounts.js && node --check server/store.js && node --check desktop/main.cjs",
     "postinstall": "node scripts/install-ytdlp.js",
     "cli": "node cli/downbit.js"
   },
@@ -42,6 +47,45 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.6",
+    "electron": "45.3.4",
+    "electron-builder": "26.18.0",
     "vite": "^8.3.5"
+  },
+  "build": {
+    "appId": "com.videoprovider.desktop",
+    "productName": "VideoProvider",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "dist/**/*",
+      "server/**/*",
+      "desktop/**/*",
+      "cli/**/*",
+      "bin/yt-dlp_macos",
+      "package.json",
+      "!node_modules/lucide-react/**",
+      "!node_modules/react/**",
+      "!node_modules/react-dom/**"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.video",
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["arm64"]
+        }
+      ],
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null,
+      "extendInfo": {
+        "CFBundleDisplayName": "Video Provider",
+        "NSAppleEventsUsageDescription": "Video Provider 需要控制本机浏览器和选择下载目录，以完成你确认的操作。"
+      }
+    }
   }
 }

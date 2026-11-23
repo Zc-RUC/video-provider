@@ -6,7 +6,39 @@
 
 > Video Provider 是本地优先的媒体工作空间，界面采用暖白与陶土色设计。
 
-## 下载即用（推荐）
+## macOS 桌面应用（Apple Silicon）
+
+当前桌面版支持 **Apple Silicon Mac（arm64）**，安装包内置 Electron、Node 服务、yt-dlp 和 FFmpeg，无需另装 Node.js。
+
+1. 打开 `VideoProvider-1.2.0-arm64.dmg`，将 **VideoProvider** 拖入 **Applications（应用程序）**。
+2. 从「应用程序」或 Launchpad 打开应用。当前使用 ad-hoc 本地签名，没有经过 Apple 正式签名和公证，首次可能需要在 Finder 中**右键 VideoProvider → 打开**。
+3. 如果窗口没有出现，点击程序坞中的应用图标。使用 **VideoProvider → Quit VideoProvider** 或 `Cmd+Q` 退出，本地服务会停止并保存任务状态。
+
+### 使用桌面应用
+
+1. 粘贴 HTTP/HTTPS 链接，或输入搜索内容，先解析并选择所需格式。
+2. 确认下载后可在任务中暂停、继续或取消。下载内容默认保存到 `~/Downloads/VideoProvider`，可在设置中修改目录。
+3. 在资料库中搜索、筛选、播放已完成的媒体，或定位到系统文件夹。
+4. 如需账号功能，在「设置 → 账号与会员」中登录 B 站或小红书。登录使用本机安装的 Chrome 和 Video Provider 独立会话，不读取日常浏览器配置，也不会绕过会员限制。
+5. 退出应用不会删除任务记录。更新时先退出应用，再用新 DMG 中的应用替换旧版本；卸载时删除应用即可，个人数据不会自动删除。
+
+### 桌面数据与隐私
+
+- 任务、设置和账号会话保存在 `~/Library/Application Support/VideoProvider/data`，不会包含在安装包中。
+- 桌面版不会自动读取源码目录下的 `.downbit/`。如需迁移，请先停止相关服务，备份后复制原数据到上述目录。
+- 原 `.downbit/` 和桌面数据可以分别用于源码 CLI 与桌面应用。若要让 CLI 复用桌面任务状态，可设置 `DOWNBIT_DATA_DIR="$HOME/Library/Application Support/VideoProvider/data"`。
+- 删除应用不会自动删除下载文件或设置；只有在确认备份后，才自行删除上述数据目录。
+
+### 自行构建桌面安装包
+
+在 Apple Silicon macOS 上运行 `npm run dist:mac`，生成：
+
+- `dist-desktop/mac-arm64/VideoProvider.app`
+- `dist-desktop/VideoProvider-1.2.0-arm64.dmg`
+
+`npm run desktop` 用于桌面开发运行，`npm run icon:mac` 用于重新生成图标。打包产物不会提交到 Git，也不会包含个人任务、Cookie、下载文件或设置。
+
+## 浏览器启动器（原方式）
 
 1. 安装 [Node.js 22.12 或更高版本](https://nodejs.org/en/download)。
 2. 下载并解压 [Video Provider 1.2.0 源码包](https://github.com/Zc-RUC/video-provider/archive/refs/tags/v1.2.0.zip)。
@@ -79,7 +111,7 @@ video-provider list
 
 React + Vite + Express；Puppeteer 负责独立账号浏览器，yt-dlp 负责站点解析，FFmpeg 负责音视频处理。服务仅绑定 `127.0.0.1`，不上传媒体到项目服务器。远程内容仍会按你的请求访问来源网站。
 
-Video Provider 提供 Web 工作台和 CLI，不包含原生安装包、DRM 破解或独立的浏览器自动嗅探扩展。请仅下载你有权保存的内容，并遵守来源网站条款。
+Video Provider 提供 macOS 桌面应用、Web 工作台和 CLI，不包含 DRM 破解或独立的浏览器自动嗅探扩展。请仅下载你有权保存的内容，并遵守来源网站条款。
 
 ## 开源许可
 
